@@ -110,4 +110,13 @@ def es_primo(num):
 
 # print(es_primo_con_lista([2, 6, 7]))
 
-def primos(lista_numeros):
+# def primos(lista_numeros):
+
+### BREAK
+contador = 0
+while True:
+    contador += 1
+    print(contador)
+
+    if contador == 17:
+        break
