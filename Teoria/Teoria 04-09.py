@@ -2,6 +2,8 @@
 # #pip install pandas
 
 # #importar libreria
+# sirve para hacer data frames, puede leer 
+# es super rapido pandas pq su base es r
 import pandas as pd
 # import numpy as np #numpy es para colocar numeros y crear juegos matematicos
 
