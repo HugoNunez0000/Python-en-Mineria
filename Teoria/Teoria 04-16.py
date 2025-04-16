@@ -71,12 +71,23 @@ print(a[1,:])  #aqui tomamos la segunda fila pq indicamos el 1
 
 import pandas as pd
 
-df = pd.read_csv('data(1).txt', sep='\t')
+df = pd.read_csv('data (1).txt', sep='\t')
 df.head()
-print(df.describe())
+#print(df.describe())
 
-# # ahora queremos filtrar los x
-# df = df[df['x'] <= 24325/2 + 100]
-# df = df[df['x'] >= 24325/2 - 100]
-# df = df[df['y'] <= 25175 + 100]
-# df = df[df['y'] >= 25175 - 100]
+# # ahora queremos filtrar los x y los y
+#filtro = (df['x'] <= 24325 + 200) & ......
+df = df[df['x'] <= 24325 + 200] #Tambien se puede sumar el minimo con el maximo y dividir por 2
+df = df[df['x'] >= 24325 - 200]
+df = df[df['y'] <= 25175 + 200]
+df = df[df['y'] >= 25175 - 200]
+df = df[df['z'] <= 3500]
+
+print(df.describe())
+mu = 0.572
+sigma = 0.103
+samples = np.random.normal(mu, sigma, 126075)  #ese numero es el numero de variables aleatorias que dabamos
+
+df['ley2'] = samples
+print(df.head())
+print(df.describe())
