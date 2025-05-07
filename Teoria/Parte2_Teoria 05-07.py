@@ -88,8 +88,39 @@ class Mineral:
     #      #2. Funcionalidades o mètodos:
     def ElNombre(self):
             print('Este mineral es:', self.nombre) #para acceder a cualquier funcion o variable de la clase es conn self
+    
+    def get_density(self):
+         '''Recupera la densidad del mineral'''
+         print('La densidad del mineral', self.nombre, 'es:', self.densidad)
 
-mineral_1 = Mineral('Bornita', 'Morado', 4, 2.7)
+    # def volume(self, tonnage):
+    #      '''Calcula el volumen ocupado por un tonelaje '''
+    #     volume = tonnage / self.densidad
+    #     print(f')
 
-mineral_1.ElNombre()
 
+
+#Inicializar los objetos
+Bornite = Mineral('Bornita', 'Morado', 4, 2.7)
+Magnetite = Mineral('Magnetita', 'Pardo', 6, 5.0)
+
+#Llamamos la funcion
+Magnetite.get_density()
+
+##Siempre hacer el codigo en INGLES###
+##Y DEBE SER LEGIBLE, DEFINIR BIEN LAS VARIABLES###
+
+'''PILARES DE LA POO (PROGRAMACION ORIENTADA A OBJETOS)'''
+'''HERENCIA'''
+
+class Persona:
+     def ___init__(self, ape_pat, ape_mat, nom):
+          self.apellido_paterno = ape_pat
+          self.apellido_materno = ape_mat
+          self.nombres = nom
+    
+        def nombre_completo(self):
+        '''Imprime el nombre completo de la persona'''
+        print(f'{self.apellido_paterno} {self.apellido_materno}, {self.nombres}')
+        
+'''CREAR UNA HERENCIA CON UN HIJO QUE SEA ORE, QUE TENGA LEY Y LUEGO UNA FUNCION PARA CALCULAR INGRESO'''
