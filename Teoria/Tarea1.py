@@ -9,13 +9,20 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 
+
 # 2 #
 
 # Leemos la base de datos (Modelo de Bloques) y le decimos como se encuentra separado
-df = pd.read_csv('data (1).txt', sep='\t')
+df = pd.read_csv('data.txt', sep='\t')
 df.head()
 
+print("\n")
+print("La estadística descriptiva del modelo de bloques es:\n")
 print(df.describe())  # Mostramos la estadística descriptiva del modelo de bloques
+print("\n")
+
+# Podemos ver que el promedio (mean) es 0.414 y la desviación estandar (std) es 0.195
+# Esto lo usaremos para crear la columna 'ley2'
 
 
 # 3 #
@@ -31,7 +38,7 @@ HistoBox = px.histogram(
     barmode='stack',  # Como se apilan las barras: stack, overlay, relative
     histnorm='percent',  # Normalizacion: percent, probability
     marginal='box',  # Grafico adicional: rug, box, violin
-    title='Histrograma de ley'
+    title='Histrograma de la variable ley'
 )
 HistoBox.show()
 
@@ -47,16 +54,18 @@ sigma = 0.195
 # Ese numero es el numero de variables aleatorias que dabamos
 # Creamos números aleatorios con una distribución normal, que tienen un promedio y una desviación estandar igual al de la columna 'ley'
 # Ese nunero es la cantidad de datos que tiene la columna 'ley', el de 'ley2' debe ser igual.
+
 samples = np.random.normal(mu, sigma, 1048575)
 
 df['ley2'] = samples  # Luego la columna 'ley2' será igual a samples
 
-# A continuacion restringimos la función y evitamos que en samples de un valor negativo.
+# A continuacion restringimos la función y evitamos que en samples (al ser random) de un valor negativo.
 df.loc[df['ley2'] < 0, 'ley2'] = 0
 
 # Mostramos la estadistica descriptiva de df con esta nueva columna incorporada.
+print("La estadistica descriptiva del modelo de bloques con la columna 'ley2' incorporada es:\n")
 print(df.describe())
-
+print("\n")
 
 # 5 #
 
@@ -81,6 +90,7 @@ C_m = 11.5  # Costo mina [USD/ton].
 # Asumimos una densidad de 2.6 kg/m3
 
 df['Density'] = 2.6
+# El volumen del bloque es 10 * 10 * 10 debido a que al ver los datos en x, y , z vemos que van saltando de 10 en 10
 df['Volume'] = 10 * 10 * 10
 
 # Luego el tonelaje del bloque será
@@ -99,7 +109,6 @@ df['Valueblock_ley2'] = df['Ton_block'] * \
 
 # 6 #
 
-
 # Creamos la columna ‘status’ para cada columna de valor de bloques donde: bloques positivos ==1 y bloques negativos o cero == 0.
 # Como tenemos 2 condiciones (1 o 0) utilizaresmos la función where de numpy
 
@@ -109,28 +118,32 @@ df['status_ley'] = np.where(df['Valueblock_ley'] > 0, 1, 0)
 # Y para la columna 'Valueblock_ley2'
 df['status_ley2'] = np.where(df['Valueblock_ley2'] > 0, 1, 0)
 
+print("La tabla con los valores de bloques según la ley y con su respectivo status se muestra a continuación:\n")
 print(df)
 
 
 # 7 #
 
-# Contamos cuantos bloques rentables (1) y cuantos no rentables (0) hay en ley1:
-print(df['status_ley'].value_counts())
+# Graficamos en 3D las dos envolventes de ley de acuerdo a su columna status
 
-# Filtramos los bloques con status_ley == 1
-bloques_validos_ley1 = df[df['status_ley'] == 1]
-print(bloques_validos_ley1)
-# Crear gráfico 3D
+# Dejamos solo los bloques con status_ley == 1
+# De esta forma solo estaremos trabajando con los bloques que son rentables de extraer.
+
+bloques_envolvente_ley1 = df[df['status_ley'] == 1]
+
+
+# Creamos el gráfico 3D
 graf1 = go.Figure()
 
 graf1.add_trace(go.Scatter3d(
-    x=bloques_validos_ley1['x'],
-    y=bloques_validos_ley1['y'],
-    z=bloques_validos_ley1['z'],
+    x=bloques_envolvente_ley1['x'],
+    y=bloques_envolvente_ley1['y'],
+    z=bloques_envolvente_ley1['z'],
     mode='markers',
     marker=dict(
         size=5,
-        color=bloques_validos_ley1['Valueblock_ley'],
+        # Se graficará según el valor del bloque
+        color=bloques_envolvente_ley1['Valueblock_ley'],
         colorscale='Inferno',
         colorbar=dict(title='Valor del Bloque en USD'),
         opacity=0.5
@@ -152,23 +165,20 @@ graf1.show()
 
 # Ahora lo mimso para ley2
 
-# Contamos cuantos bloques rentables (1) y cuantos no rentables (0) hay en ley2:
-print(df['status_ley2'].value_counts())
+# Dejamos solo los bloques con status_ley2 == 1
+bloques_envolvente_ley2 = df[df['status_ley2'] == 1]
 
-# Filtramos los bloques con status_ley2 == 1
-bloques_validos_ley2 = df[df['status_ley2'] == 1]
-print(bloques_validos_ley2)
-# Crear gráfico 3D
+# Creamos el grafico 3D
 graf2 = go.Figure()
 
 graf2.add_trace(go.Scatter3d(
-    x=bloques_validos_ley2['x'],
-    y=bloques_validos_ley2['y'],
-    z=bloques_validos_ley2['z'],
+    x=bloques_envolvente_ley2['x'],
+    y=bloques_envolvente_ley2['y'],
+    z=bloques_envolvente_ley2['z'],
     mode='markers',
     marker=dict(
         size=5,
-        color=bloques_validos_ley2['Valueblock_ley2'],
+        color=bloques_envolvente_ley2['Valueblock_ley2'],
         colorscale='Magma',
         colorbar=dict(title='Valor del Bloque en USD'),
         opacity=0.5
