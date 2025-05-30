@@ -83,7 +83,7 @@ def open_file():
     ruta_archivo = filedialog.askopenfilename(title = "Abrir archivo")
     if ruta_archivo:
         df = pd.read_csv(ruta_archivo, sep = ';')
-        messagebox.showinfo("Arcihvo cargado", "Se ha cargado el archivo correctamente")
+        messagebox.showinfo("Archivo cargado", "Se ha cargado el archivo correctamente")
         print(df)
         after_read()
     return
