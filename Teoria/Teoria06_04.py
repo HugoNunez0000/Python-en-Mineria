@@ -70,7 +70,7 @@ from tkinter import ttk
 # root.mainloop()
 
 import tkinter as tk
-from label
+
 class RockDatabase(tk.Toplevel):
     '''Ventana para base de datos de la roca'''
 
