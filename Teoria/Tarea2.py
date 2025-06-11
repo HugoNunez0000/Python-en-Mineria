@@ -7,20 +7,54 @@ print("PARTE 1")
 print("\n")
 
 
-class Explosives:
+class Explosives:  # Creamos la clase explosivos
+    """
+    Clase que representa un explosivo .
+
+    Atributos:
+    ----------
+    commercial_name : str
+        Nombre comercial del explosivo.
+    explosive_density : float
+        Densidad del explosivo en g/cm³.
+    vod : int
+        Velocidad de detonación (VoD) en m/s.
+    rws : float
+        Fuerza relativa respecto al ANFO (Relative Weight Strength).
+    water_resistance : str
+        Indicador de resistencia al agua, colocar 'Si' o 'No'.
+
+    Métodos:
+    ---------
+    detonation_pressure():
+        Calcula y muestra la presión de detonación del explosivo usando la fórmula:
+        P = (1/4) * densidad * VoD²
+
+    linear_density(diameter_mm: float):
+        Calcula y muestra la densidad lineal del explosivo en función del diámetro (en mm)
+        usando la fórmula: (π/4) * diámetro² * densidad
+
+    kg_anfo_equivalent(weight_explosive: float):
+        Calcula y muestra el equivalente en kg de ANFO para un peso dado de explosivo.
+
+    is_for_water():
+        Indica si el explosivo es o no resistente al agua.
+    """
+
     def __init__(
             self, commercial_name,
             explosive_density,
-            vod, relative_power, #rws
+            vod, rws,  # Relative Weight Strengh
             water_resistance):
 
         self.commercial_name = commercial_name
         self.explosive_density = explosive_density
         self.vod = vod
-        self.relative_power = relative_power
+        self.rws = rws
         self.water_resistance = water_resistance
         return
 
+# Realizamos los calculos
     def detonation_pressure(self):
         presideton = (1/4)*self.explosive_density*self.vod**2
         print(
@@ -34,13 +68,13 @@ class Explosives:
         return
 
     def kg_anfo_equivalent(self, weight_explosive):
-        kg_ANFO = (self.relative_power*weight_explosive)
+        kg_ANFO = (self.rws*weight_explosive)
         print(
             f"500 kilogramos del explosivo {self.commercial_name} equivalen a {kg_ANFO} kg de ANFO")
         return
 
     def is_for_water(self):
-        if self.water_resistance == 'Si': #ponerle true o false
+        if self.water_resistance == 'Si':
             print(
                 f"El explosivo {self.commercial_name} Sí es resistente al agua")
         elif self.water_resistance == 'No':
@@ -81,4 +115,4 @@ print("PARTE 2")
 print("\n")
 
 
-#False or True
+# False or True
