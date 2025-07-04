@@ -110,20 +110,52 @@ class MainWindow(tk.Tk):
         self.frame_izquierdo = tk.Frame(
             self, width=700, height=600, bg="white")
         self.frame_izquierdo.pack(side="left", fill="both", expand=True)
+
         self.frame_derecho = tk.Frame(
             self, width=300, height=600, bg="lightgray")
-        self.frame_derecho.pack_propagate(False)
         self.frame_derecho.pack(side="right", fill="both", expand=False)
-        # Frame superior: preguntas
-        self.frame_preguntas = tk.Frame(self.frame_derecho, bg="lightgray")
-        self.frame_preguntas.pack(fill="both", expand=True)
 
-        # Frame inferior: resultados
+        # ----- Frame superior con scroll -----
+        frame_scroll_area = tk.Frame(self.frame_derecho, bg="lightgray")
+        frame_scroll_area.pack(side="top", fill="both", expand=True)
+
+        self.canvas_preguntas = tk.Canvas(
+            frame_scroll_area, bg="lightgray", highlightthickness=0)
+        scrollbar = tk.Scrollbar(
+            frame_scroll_area, orient="vertical", command=self.canvas_preguntas.yview)
+        self.canvas_preguntas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        self.canvas_preguntas.pack(side="left", fill="both", expand=True)
+
+        self.frame_preguntas = tk.Frame(self.canvas_preguntas, bg="lightgray")
+        self.canvas_preguntas.create_window(
+            (0, 0), window=self.frame_preguntas, anchor="nw")
+
+        self.frame_preguntas.bind(
+            "<Configure>",
+            lambda e: self.canvas_preguntas.configure(
+                scrollregion=self.canvas_preguntas.bbox("all"))
+        )
+
+        # ----- Frame inferior con borde negro -----
         self.frame_resultados = tk.Frame(
-            self.frame_derecho, bg="lightgray", height=200)
-        self.frame_resultados.pack(fill="x", side="bottom")
-        self.frame_resultados.pack_propagate(
-            False)  # Para mantener el alto fijo
+            self.frame_derecho,
+            bg="lightgray",
+            height=200,
+            highlightbackground="black",
+            highlightthickness=2
+        )
+        self.frame_resultados.pack(side="bottom", fill="x")
+        self.frame_resultados.pack_propagate(False)
+
+        self.bind_mousewheel()
+
+    def bind_mousewheel(self):
+        def _on_mousewheel(event):
+            self.canvas_preguntas.yview_scroll(
+                int(-1 * (event.delta / 120)), "units")
+        self.canvas_preguntas.bind_all("<MouseWheel>", _on_mousewheel)
 
     def show_welcome_message(self):
         self.label_bienvenida = tk.Label(
@@ -180,10 +212,23 @@ class MainWindow(tk.Tk):
                 callback=self.aplicar_puntaje,
                 selected_option_dict=self.selected_options
             )
-        tk.Button(self.frame_resultados, text="Finalizar y ver resultados",
-                  bg='green', fg='white', command=self.mostrar_resultados).pack(pady=10)
+        # Frame contenedor centrado
+        boton_frame = tk.Frame(self.frame_resultados, bg="lightgray")
+        boton_frame.pack(pady=80)  # aumenta separación superior
 
+        # Botón centrado dentro del frame
+        tk.Button(
+            boton_frame,
+            text="Finalizar y ver resultados",
+            bg='green',
+            fg='white',
+            font=('Arial', 10, 'bold'),   # fuente más grande y clara
+            padx=20,                      # espacio interno horizontal
+            pady=10,                      # espacio interno vertical
+            command=self.mostrar_resultados
+        ).pack()
         # Cambia aplicar_puntaje para que SOLO DEVUELVA la lista de valores:
+
     def aplicar_puntaje(self, categoria, selected_option):
         opcion = selected_option.get()
         if categoria in puntajes_dict and opcion in puntajes_dict[categoria]:
@@ -211,7 +256,7 @@ class MainWindow(tk.Tk):
 
         # Mostrar título
         tk.Label(self.frame_resultados, text="Resultados Totales",
-                 font=("Arial", 14, "bold")).pack(pady=5)
+                 font=("Arial", 11, "bold")).pack(pady=3)
 
         # Mostrar resultados en Text
         text_resultados = tk.Text(
@@ -223,7 +268,7 @@ class MainWindow(tk.Tk):
 
         # Crear nuevamente el botón para poder presionar varias veces
         tk.Button(self.frame_resultados, text="Finalizar y ver resultados",
-                  bg='green', fg='white', command=self.mostrar_resultados).pack(pady=10)
+                  bg='green', fg='white', command=self.mostrar_resultados).pack(pady=5)
 
 
 if __name__ == "__main__":
