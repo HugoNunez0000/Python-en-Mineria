@@ -143,7 +143,7 @@ class MainWindow(tk.Tk):
             self.frame_derecho,
             bg="lightgray",
             height=200,
-            highlightbackground="black",
+            highlightbackground="gray",
             highlightthickness=2
         )
         self.frame_resultados.pack(side="bottom", fill="x")
