@@ -1,15 +1,14 @@
-# main.py
-
 import pandas as pd
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, Toplevel
+from tkinter.ttk import Combobox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
-from componentes import bloque_radiobuttons
-
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+# Importamos el diccionario
+from componentes import bloque_radiobuttons, puntajes_dict
 
 df = None
+column_names = []  # Para almacenar los nombres de las columnas
 
 puntajes = {
     'Cielo Abierto': 0, 'Block Caving': 0, 'Sublevel Stoping': 0,
@@ -18,46 +17,6 @@ puntajes = {
 }
 
 metodos = list(puntajes.keys())
-
-puntajes_dict = {
-    'geometria': {
-        'Masivo': [3, 4, 2, 3, -49, 0, 2, 0, 3, 0],
-        'Tabular': [2, 2, 2, 4, 4, 4, 2, 4, 3, 2],
-        'Irregular': [3, 0, 1, 1, -49, 2, 1, 2, 0, 4],
-    },
-    'potencia': {
-        'Baja (0-10m)': [2, -49, 1, -49, 4, 4, 1, 4, -49, 4],
-        'Intermedia (10-30m)': [3, 0, 2, 0, 0, 2, 2, 4, 0, 4],
-        'Potente (30-100m)': [4, 2, 4, 4, -49, -49, 4, 0, 3, 1],
-        'Muy potente (>100m)': [4, 4, 3, 4, -49, -49, 3, 0, 4, 1],
-    },
-    'inclinacion': {
-        'Horizontal (0-20°)': [3, 3, 2, 1, 4, 4, 2, 0, 4, 2],
-        'Intermedio (20-55°)': [3, 2, 1, 1, 0, 1, 1, 3, 1, 3],
-        'Vertical (>55°)': [4, 4, 4, 4, -49, 0, 4, 4, 2, 3],
-    },
-    'leyes': {
-        'Uniforme': [3, 4, 3, 4, 4, 3, 3, 3, 4, 3],
-        'Gradual': [3, 2, 3, 2, 2, 3, 2, 3, 2, 3],
-        'Errática': [3, 0, 1, 0, 0, 3, 1, 3, 0, 3],
-    },
-    'competencia_macizo': {
-        'Baja (<2)': [3, 4, -49, 0, 4, 0, 1, 3, 2, 4],
-        'Media (2-4)': [4, 1, 3, 3, 1, 3, 3, 2, 3, 1],
-        'Alta (>4)': [4, 1, 4, 3, 0, 4, 4, 2, 3, 1],
-    },
-    'espaciado': {
-        'Muy cercano (>16 ff/m)': [2, 4, 0, 0, 4, 0, 0, 3, 1, 4],
-        'Cercano (10-16 ff/m)': [3, 4, 0, 2, 4, 1, 1, 3, 1, 4],
-        'Espaciado (3-10 ff/m)': [4, 3, 1, 4, 0, 2, 3, 2, 2, 2],
-        'Muy espaciado (<3 ff/m)': [4, 0, 4, 4, 0, 4, 4, 2, 4, 1],
-    },
-    'competencia_estructuras': {
-        'Baja': [2, 4, 0, 0, 4, 0, 0, 3, 1, 4],
-        'Media': [3, 3, 2, 2, 3, 2, 2, 3, 2, 3],
-        'Alta': [1, 0, 4, 2, 0, 4, 4, 2, 4, 2],
-    },
-}
 
 
 class MainWindow(tk.Tk):
@@ -83,7 +42,8 @@ class MainWindow(tk.Tk):
     def create_menu(self):
         menu_bar = tk.Menu(self)
         archivo_menu = tk.Menu(menu_bar, tearoff=0)
-        archivo_menu.add_command(label="Abrir archivo", command=self.open_file)
+        archivo_menu.add_command(
+            label="Cargar archivo", command=self.open_file_dialog)
         archivo_menu.add_separator()
         archivo_menu.add_command(label="Salir", command=self.quit)
         menu_bar.add_cascade(label="Archivo", menu=archivo_menu)
@@ -93,18 +53,119 @@ class MainWindow(tk.Tk):
         self.separator = tk.Frame(self, height=2, bg="gray")
         self.separator.pack(fill="x")
 
-    def open_file(self):
-        global df
+    def open_file_dialog(self):
+        # Crear una ventana emergente para cargar el archivo
+        self.top = Toplevel(self)
+        self.top.title("Cargar Archivo")
+        self.top.geometry("400x200")
+
+        # Campo para la ruta del archivo
+        self.file_path = tk.StringVar()
+        tk.Label(self.top, text="Ruta del archivo:").pack(pady=10)
+        entry_file = tk.Entry(self.top, textvariable=self.file_path, width=50)
+        entry_file.pack(pady=5)
+
+        # Botón para explorar archivos
+        tk.Button(self.top, text="Explorar",
+                  command=self.browse_file).pack(pady=5)
+
+        # Botón para guardar y cargar el DataFrame
+        tk.Button(self.top, text="Guardar",
+                  command=self.open_column_selection).pack(pady=20)
+
+    def browse_file(self):
+        # Método para abrir el explorador de archivos
+        file_path = filedialog.askopenfilename(title="Seleccionar archivo", filetypes=[
+                                               ("CSV files", "*.csv"), ("All files", "*.*")])
+        if file_path:
+            self.file_path.set(file_path)
+
+    def open_column_selection(self):
+        global df, column_names
         try:
-            ruta_archivo = filedialog.askopenfilename(title="Abrir archivo")
+            # Cargar el archivo CSV
+            ruta_archivo = self.file_path.get()
             if ruta_archivo:
+                # Leer el archivo completo para obtener los nombres de las columnas
+                # Cambia el separador si es necesario
                 df = pd.read_csv(ruta_archivo, sep=';')
-                self.after_read()
-                messagebox.showinfo("Archivo cargado",
-                                    "Se ha cargado el archivo correctamente")
-        except:
+                column_names = df.columns.tolist()  # Obtener nombres de columnas
+
+                # Crear un nuevo Toplevel para seleccionar columnas
+                self.column_selection_window(column_names)
+
+            else:
+                messagebox.showerror(
+                    "Error", "Por favor, seleccione un archivo.")
+        except Exception as e:
             messagebox.showerror(
-                "Error de carga", "Ingrese un archivo .csv o .txt que represente un modelo de bloques")
+                "Error de carga", f"Error al cargar el archivo: {e}")
+
+    def column_selection_window(self, column_titles):
+        column_window = Toplevel(self)
+        column_window.title("Seleccionar Columnas")
+        column_window.geometry("400x300")
+
+        # Combobox para seleccionar las columnas
+        tk.Label(column_window, text="Seleccionar columna para X:").pack(pady=10)
+        self.combo_x = Combobox(column_window, values=column_titles)
+        self.combo_x.pack(pady=5)
+
+        tk.Label(column_window, text="Seleccionar columna para Y:").pack(pady=10)
+        self.combo_y = Combobox(column_window, values=column_titles)
+        self.combo_y.pack(pady=5)
+
+        tk.Label(column_window, text="Seleccionar columna para Z:").pack(pady=10)
+        self.combo_z = Combobox(column_window, values=column_titles)
+        self.combo_z.pack(pady=5)
+
+        tk.Label(column_window,
+                 text="Seleccionar columna de ley (CU/AU):").pack(pady=10)
+        self.combo_law = Combobox(column_window, values=column_titles)
+        self.combo_law.pack(pady=5)
+
+        # Botón para confirmar selección de columnas
+        tk.Button(column_window, text="Confirmar Selección",
+                  command=self.confirm_column_selection).pack(pady=20)
+
+    def confirm_column_selection(self):
+        if df is not None:
+            self.after_read()
+
+    def after_read(self):
+        if df is None:
+            messagebox.showerror("Error", "No se ha cargado ningún archivo")
+            return
+
+        for widget in self.frame_izquierdo.winfo_children():
+            widget.destroy()
+
+        # Obtener los nombres de las columnas seleccionadas
+        col_x = self.combo_x.get()
+        col_y = self.combo_y.get()
+        col_z = self.combo_z.get()
+        col_law = self.combo_law.get()
+
+        # Crear el gráfico 3D
+        fig = plt.figure(figsize=(7, 6))
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Usar los nombres de las columnas seleccionadas
+        xc = df[col_x]
+        yc = df[col_y]
+        zc = df[col_z]
+        grade = df[col_law]
+
+        ax.scatter(xc, yc, zc, c=grade, marker='o')
+        ax.set_xlabel(col_x)  # Etiqueta X con el nombre de la columna
+        ax.set_ylabel(col_y)  # Etiqueta Y con el nombre de la columna
+        ax.set_zlabel(col_z)  # Etiqueta Z con el nombre de la columna
+        ax.set_title('Modelo de bloques 3D')
+        plt.tight_layout()
+        canvas = FigureCanvasTkAgg(fig, master=self.frame_izquierdo)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+        self.create_questionnaire()
 
     def create_frames(self):
         self.frame_izquierdo = tk.Frame(
@@ -132,20 +193,12 @@ class MainWindow(tk.Tk):
         self.canvas_preguntas.create_window(
             (0, 0), window=self.frame_preguntas, anchor="nw")
 
-        self.frame_preguntas.bind(
-            "<Configure>",
-            lambda e: self.canvas_preguntas.configure(
-                scrollregion=self.canvas_preguntas.bbox("all"))
-        )
+        self.frame_preguntas.bind("<Configure>", lambda e: self.canvas_preguntas.configure(
+            scrollregion=self.canvas_preguntas.bbox("all")))
 
         # ----- Frame inferior con borde negro -----
         self.frame_resultados = tk.Frame(
-            self.frame_derecho,
-            bg="lightgray",
-            height=200,
-            highlightbackground="gray",
-            highlightthickness=2
-        )
+            self.frame_derecho, bg="lightgray", height=200, highlightbackground="gray", highlightthickness=2)
         self.frame_resultados.pack(side="bottom", fill="x")
         self.frame_resultados.pack_propagate(False)
 
@@ -158,50 +211,13 @@ class MainWindow(tk.Tk):
         self.canvas_preguntas.bind_all("<MouseWheel>", _on_mousewheel)
 
     def show_welcome_message(self):
-        self.label_bienvenida = tk.Label(
-            self.frame_izquierdo,
-            text="¡Bienvenido!",
-            font=("Arial", 20, "bold"),
-            bg="white",
-            justify="center"
-        )
+        self.label_bienvenida = tk.Label(self.frame_izquierdo, text="¡Bienvenido!", font=(
+            "Arial", 20, "bold"), bg="white", justify="center")
         self.label_bienvenida.place(relx=0.5, rely=0.4, anchor="center")
 
-        self.label_subtitulo = tk.Label(
-            self.frame_izquierdo,
-            text="Aquí podrás seleccionar el método de explotación según Nicholas",
-            font=("Arial", 16, "bold"),
-            bg="white",
-            wraplength=600,
-            justify="center"
-        )
+        self.label_subtitulo = tk.Label(self.frame_izquierdo, text="Aquí podrás seleccionar el método de explotación según Nicholas", font=(
+            "Arial", 16, "bold"), bg="white", wraplength=600, justify="center")
         self.label_subtitulo.place(relx=0.5, rely=0.5, anchor="center")
-
-    def after_read(self):
-        if df is None:
-            messagebox.showerror("Error", "No se ha cargado ningún archivo")
-            return
-
-        if hasattr(self, 'label_bienvenida') and self.label_bienvenida.winfo_exists():
-            self.label_bienvenida.destroy()
-
-        for widget in self.frame_izquierdo.winfo_children():
-            widget.destroy()
-
-        fig = plt.figure(figsize=(7, 6))
-        ax = fig.add_subplot(111, projection='3d')
-        xc, yc, zc = df['XC'], df['YC'], df['ZC']
-        grade = df['CU']
-        ax.scatter(xc, yc, zc, c=grade, marker='o')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        ax.set_title('Modelo de bloques 3D')
-        plt.tight_layout()
-        canvas = FigureCanvasTkAgg(fig, master=self.frame_izquierdo)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
-        self.create_questionnaire()
 
     def create_questionnaire(self):
         for categoria, opciones in puntajes_dict.items():
@@ -227,15 +243,12 @@ class MainWindow(tk.Tk):
             pady=10,                      # espacio interno vertical
             command=self.mostrar_resultados
         ).pack()
-        # Cambia aplicar_puntaje para que SOLO DEVUELVA la lista de valores:
 
     def aplicar_puntaje(self, categoria, selected_option):
         opcion = selected_option.get()
         if categoria in puntajes_dict and opcion in puntajes_dict[categoria]:
             return puntajes_dict[categoria][opcion]
         return None
-
-    # Cambia mostrar_resultados para que use un diccionario local nuevo:
 
     def mostrar_resultados(self):
         puntajes_local = {metodo: 0 for metodo in puntajes}

@@ -2,6 +2,47 @@
 
 import tkinter as tk
 
+# Diccionario de puntajes
+puntajes_dict = {
+    'geometria': {
+        'Masivo': [3, 4, 2, 3, -49, 0, 2, 0, 3, 0],
+        'Tabular': [2, 2, 2, 4, 4, 4, 2, 4, 3, 2],
+        'Irregular': [3, 0, 1, 1, -49, 2, 1, 2, 0, 4],
+    },
+    'potencia / espesor': {
+        'Baja (0-10m)': [2, -49, 1, -49, 4, 4, 1, 4, -49, 4],
+        'Intermedia (10-30m)': [3, 0, 2, 0, 0, 2, 2, 4, 0, 4],
+        'Potente (30-100m)': [4, 2, 4, 4, -49, -49, 4, 0, 3, 1],
+        'Muy potente (>100m)': [4, 4, 3, 4, -49, -49, 3, 0, 4, 1],
+    },
+    'inclinacion': {
+        'Horizontal (0-20°)': [3, 3, 2, 1, 4, 4, 2, 0, 4, 2],
+        'Intermedio (20-55°)': [3, 2, 1, 1, 0, 1, 1, 3, 1, 3],
+        'Vertical (>55°)': [4, 4, 4, 4, -49, 0, 4, 4, 2, 3],
+    },
+    'distribución_leyes': {
+        'Uniforme': [3, 4, 3, 4, 4, 3, 3, 3, 4, 3],
+        'Gradual': [3, 2, 3, 2, 2, 3, 2, 3, 2, 3],
+        'Errática': [3, 0, 1, 0, 0, 3, 1, 3, 0, 3],
+    },
+    'competencia_macizo': {
+        'Baja (<2)': [3, 4, -49, 0, 4, 0, 1, 3, 2, 4],
+        'Media (2-4)': [4, 1, 3, 3, 1, 3, 3, 2, 3, 1],
+        'Alta (>4)': [4, 1, 4, 3, 0, 4, 4, 2, 3, 1],
+    },
+    'espaciamiento_estructuras': {
+        'Muy cercano (>16 ff/m)': [2, 4, 0, 0, 4, 0, 0, 3, 1, 4],
+        'Cercano (10-16 ff/m)': [3, 4, 0, 2, 4, 1, 1, 3, 1, 4],
+        'Espaciado (3-10 ff/m)': [4, 3, 1, 4, 0, 2, 3, 2, 2, 2],
+        'Muy espaciado (<3 ff/m)': [4, 0, 4, 4, 0, 4, 4, 2, 4, 1],
+    },
+    'competencia_estructuras': {
+        'Baja': [2, 4, 0, 0, 4, 0, 0, 3, 1, 4],
+        'Media': [3, 3, 2, 2, 3, 2, 2, 3, 2, 3],
+        'Alta': [1, 0, 4, 2, 0, 4, 4, 2, 4, 2],
+    },
+}
+
 
 def bloque_radiobuttons(frame_padre, categoria, opciones, callback, selected_option_dict):
     """

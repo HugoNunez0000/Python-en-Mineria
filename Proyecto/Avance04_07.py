@@ -1,13 +1,16 @@
 # main.py
 
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pandas as pd
 import tkinter as tk
+from tkinter import filedialog, messagebox, Toplevel
 from tkinter import filedialog, messagebox
+from tkinter.ttk import Combobox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
-from componentes import bloque_radiobuttons
+# Importamos el diccionario
+from componentes import bloque_radiobuttons, puntajes_dict
 
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 df = None
 
@@ -18,46 +21,6 @@ puntajes = {
 }
 
 metodos = list(puntajes.keys())
-
-puntajes_dict = {
-    'geometría': {
-        'Masivo': [3, 4, 2, 3, -49, 0, 2, 0, 3, 0],
-        'Tabular': [2, 2, 2, 4, 4, 4, 2, 4, 3, 2],
-        'Irregular': [3, 0, 1, 1, -49, 2, 1, 2, 0, 4],
-    },
-    'potencia': {
-        'Baja (0-10m)': [2, -49, 1, -49, 4, 4, 1, 4, -49, 4],
-        'Intermedia (10-30m)': [3, 0, 2, 0, 0, 2, 2, 4, 0, 4],
-        'Potente (30-100m)': [4, 2, 4, 4, -49, -49, 4, 0, 3, 1],
-        'Muy potente (>100m)': [4, 4, 3, 4, -49, -49, 3, 0, 4, 1],
-    },
-    'inclinación': {
-        'Horizontal (0-20°)': [3, 3, 2, 1, 4, 4, 2, 0, 4, 2],
-        'Intermedio (20-55°)': [3, 2, 1, 1, 0, 1, 1, 3, 1, 3],
-        'Vertical (>55°)': [4, 4, 4, 4, -49, 0, 4, 4, 2, 3],
-    },
-    'leyes': {
-        'Uniforme': [3, 4, 3, 4, 4, 3, 3, 3, 4, 3],
-        'Gradual': [3, 2, 3, 2, 2, 3, 2, 3, 2, 3],
-        'Errática': [3, 0, 1, 0, 0, 3, 1, 3, 0, 3],
-    },
-    'competencia_macizo': {
-        'Baja (<2)': [3, 4, -49, 0, 4, 0, 1, 3, 2, 4],
-        'Media (2-4)': [4, 1, 3, 3, 1, 3, 3, 2, 3, 1],
-        'Alta (>4)': [4, 1, 4, 3, 0, 4, 4, 2, 3, 1],
-    },
-    'espaciado': {
-        'Muy cercano (>16 ff/m)': [2, 4, 0, 0, 4, 0, 0, 3, 1, 4],
-        'Cercano (10-16 ff/m)': [3, 4, 0, 2, 4, 1, 1, 3, 1, 4],
-        'Espaciado (3-10 ff/m)': [4, 3, 1, 4, 0, 2, 3, 2, 2, 2],
-        'Muy espaciado (<3 ff/m)': [4, 0, 4, 4, 0, 4, 4, 2, 4, 1],
-    },
-    'competencia_estructuras': {
-        'Baja': [2, 4, 0, 0, 4, 0, 0, 3, 1, 4],
-        'Media': [3, 3, 2, 2, 3, 2, 2, 3, 2, 3],
-        'Alta': [1, 0, 4, 2, 0, 4, 4, 2, 4, 2],
-    },
-}
 
 
 class MainWindow(tk.Tk):
@@ -83,7 +46,8 @@ class MainWindow(tk.Tk):
     def create_menu(self):
         menu_bar = tk.Menu(self)
         archivo_menu = tk.Menu(menu_bar, tearoff=0)
-        archivo_menu.add_command(label="Abrir archivo", command=self.open_file)
+        archivo_menu.add_command(
+            label="Abrir archivo", command=self.open_file_dialog)
         archivo_menu.add_separator()
         archivo_menu.add_command(label="Salir", command=self.quit)
         menu_bar.add_cascade(label="Archivo", menu=archivo_menu)
@@ -93,18 +57,104 @@ class MainWindow(tk.Tk):
         self.separator = tk.Frame(self, height=2, bg="gray")
         self.separator.pack(fill="x")
 
-    def open_file(self):
+    def open_file_dialog(self):
+        # Crear una ventana emergente para cargar el archivo
+        self.top = Toplevel(self)
+        self.top.title("Cargar Archivo")
+        self.top.geometry("400x500")
+
+        # Esto hace que la ventana sea modal: bloquea interacción con la ventana principal
+        self.top.grab_set()
+        self.top.focus_force()
+        # Opcional, para que esté "sobre" la ventana principal
+        self.top.transient(self)
+
+        # Campo para la ruta del archivo
+        self.file_path = tk.StringVar()
+        tk.Label(self.top, text="Ruta del archivo:").pack(pady=10)
+        entry_file = tk.Entry(self.top, textvariable=self.file_path, width=50)
+        entry_file.pack(pady=5)
+
+        # Botón para explorar archivos
+        tk.Button(self.top, text="Explorar",
+                  command=self.browse_file).pack(pady=5)
+
+        # Combobox para seleccionar las columnas
+        tk.Label(self.top, text="Seleccionar columna para X:").pack(pady=10)
+        self.combo_x = Combobox(self.top)
+        self.combo_x.pack(pady=5)
+
+        tk.Label(self.top, text="Seleccionar columna para Y:").pack(pady=10)
+        self.combo_y = Combobox(self.top)
+        self.combo_y.pack(pady=5)
+
+        tk.Label(self.top, text="Seleccionar columna para Z:").pack(pady=10)
+        self.combo_z = Combobox(self.top)
+        self.combo_z.pack(pady=5)
+
+        tk.Label(self.top, text="Seleccionar columna de ley (CU/AU):").pack(pady=10)
+        self.combo_law = Combobox(self.top)
+        self.combo_law.pack(pady=5)
+
+        # Botón para guardar y cargar el DataFrame
+        tk.Button(self.top, text="Guardar y cargar",
+                  command=self.load_file).pack(pady=20)
+
+    def browse_file(self):
+        file_path = filedialog.askopenfilename(title="Seleccionar archivo", filetypes=[
+                                               ("CSV files", "*.csv"), ("All files", "*.*")])
+        if file_path:
+            self.file_path.set(file_path)
+            try:
+                # Solo la primera fila para obtener columnas
+                temp_df = pd.read_csv(file_path, sep=';', nrows=0)
+                column_names = temp_df.columns.tolist()
+
+                # Actualizar los Combobox con las columnas detectadas
+                self.combo_x['values'] = column_names
+                self.combo_y['values'] = column_names
+                self.combo_z['values'] = column_names
+                self.combo_law['values'] = column_names
+
+                # Seleccionar valores por defecto si hay columnas
+                if len(column_names) >= 4:
+                    self.combo_x.current(0)
+                    self.combo_y.current(1)
+                    self.combo_z.current(2)
+                    self.combo_law.current(3)
+            except Exception as e:
+                messagebox.showerror(
+                    "Error", f"No se pudo leer el archivo: {e}")
+
+    def load_file(self):
         global df
-        try:
-            ruta_archivo = filedialog.askopenfilename(title="Abrir archivo")
-            if ruta_archivo:
-                df = pd.read_csv(ruta_archivo, sep=';')
-                self.after_read()
-                messagebox.showinfo("Archivo cargado",
-                                    "Se ha cargado el archivo correctamente")
-        except:
+        ruta_archivo = self.file_path.get()
+        if not ruta_archivo:
             messagebox.showerror(
-                "Error de carga", "Ingrese un archivo .csv o .txt que represente un modelo de bloques")
+                "Error", "Por favor, seleccione un archivo primero.")
+            return
+        try:
+            # Cargar todo el DataFrame con todas las columnas
+            df = pd.read_csv(ruta_archivo, sep=';')
+
+            # Validar que las columnas seleccionadas existan en df
+            cols_seleccionadas = [self.combo_x.get(), self.combo_y.get(
+            ), self.combo_z.get(), self.combo_law.get()]
+            for col in cols_seleccionadas:
+                if col not in df.columns:
+                    messagebox.showerror(
+                        "Error", f"La columna '{col}' no existe en el archivo.")
+                    return
+
+            messagebox.showinfo(
+                "Archivo cargado", "Archivo cargado y columnas seleccionadas correctamente.")
+
+            self.after_read()   # Mostrar modelo y cuestionario
+            self.top.destroy()  # Cerrar ventana emergente
+
+        except Exception as e:
+            messagebox.showerror(
+                "Error de carga", f"Error al cargar el archivo: {e}")
 
     def scroll_y_marco(self):
         # Limpiar si ya existía (por recarga)
@@ -211,22 +261,25 @@ class MainWindow(tk.Tk):
 
         fig = plt.figure(figsize=(7, 6))
         ax = fig.add_subplot(111, projection='3d')
-        xc, yc, zc = df['XC'], df['YC'], df['ZC']
-        grade = df['CU']
+        xc = df[self.combo_x.get()]
+        yc = df[self.combo_y.get()]
+        zc = df[self.combo_z.get()]
+        grade = df[self.combo_law.get()]
+
         ax.scatter(xc, yc, zc, c=grade, marker='o')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+        ax.set_xlabel(self.combo_x.get())
+        ax.set_ylabel(self.combo_y.get())
+        ax.set_zlabel(self.combo_z.get())
         ax.set_title('Modelo de bloques 3D')
         plt.tight_layout()
         canvas = FigureCanvasTkAgg(fig, master=self.frame_izquierdo)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
-        # 🚀 Aquí se crea el panel derecho completo
+        # ⚠️ Necesario: crear el panel derecho con scroll antes de mostrar preguntas
         self.scroll_y_marco()
 
-        # Luego las preguntas
+        # Mostrar cuestionario
         self.create_questionnaire()
 
     def create_questionnaire(self):
